@@ -42,14 +42,15 @@ https://docs.docker.com/engine/install/centos/
    yum makecache fast
    ```
 
-5. 安装docker相关的依赖（docker-ce，社区版）
+5. 安装最新版本 Docker Engine-Community 和 containerd
 
    ```bash
    yum install docker-ce docker-ce-cli containerd.io
    ```
 
+   查看所有仓库中的版本并安装指定版本
+
    ```bash
-   #查看所有仓库中的版本并安装指定版本
    yum list docker-ce --showduplicates | sort -r
    
    yum install docker-ce-<VERSION_STRING> docker-ce-cli-<VERSION_STRING> containerd.io
@@ -93,7 +94,6 @@ https://docs.docker.com/engine/install/centos/
 2. 删除资源 images, containers, and volumes
 
    ```bash
+   # docker默认工作路径为 /var/lib/docker
    rm -rf /var/lib/docker
-   
-   #docker默认工作路径 /var/lib/docker
    ```
