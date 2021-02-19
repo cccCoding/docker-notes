@@ -6,7 +6,7 @@ https://docs.docker.com/reference/
 
 ```shell
 docker --help
-docker 命令 --help
+docker command --help
 ```
 
 #### info|version
