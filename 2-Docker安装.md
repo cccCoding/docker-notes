@@ -2,6 +2,8 @@
 
 https://docs.docker.com/engine/install/centos/
 
+建议CentOS7及以上的发行版本。建议使用`overlay2`存储驱动程序。
+
 #### docker安装
 
 1. 卸载旧版本
@@ -54,6 +56,8 @@ https://docs.docker.com/engine/install/centos/
    yum list docker-ce --showduplicates | sort -r
    
    yum install docker-ce-<VERSION_STRING> docker-ce-cli-<VERSION_STRING> containerd.io
+   
+   yum install docker-ce-18.09.1 docker-ce-cli-18.09.1 containerd.io
    ```
 
 6. 启动docker
@@ -66,7 +70,11 @@ https://docs.docker.com/engine/install/centos/
 
    ```bash
    docker version
+   
+   docker run hello-world
    ```
+
+   > 安装完成后默认 docker 命令只能以 root 用户执行，如果想允许普通用户执行 docker 命令，需要执行以下命令 sudo groupadd docker && sudo gpasswd -a ${USER} docker && sudo systemctl restart docker ，执行完命令后，退出当前命令行窗口并打开新的窗口即可。
 
 8. 配置阿里云镜像加速
 

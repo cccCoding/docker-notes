@@ -23,7 +23,14 @@ docker 命令 --help
 * pull
 
   ```shell
-  docker pull mysql:5.7		# 下载镜像，不指定版本则默认下载latest
+  # Registry 为注册服务器，默认为 docker.io，可替换为自己的注册服务器
+  # Repository 为镜像仓库，通常把一组相关联的镜像归为一个镜像仓库，默认为 library
+  # Image 为镜像名称
+  # Tag 为镜像的标签，不指定则默认为 latese
+  # 先从本地搜索，本地搜索不到则从远程仓库下载
+  docker pull [Registry]/[Repository]/[Image]:[Tag]
+  
+  docker pull mysql:5.7
   	--disable-content-trust	# 忽略镜像的校验，默认为开启
   5.7: Pulling from library/mysql
   852e50cd189d: Pull complete 	# layer分层下载，docker image的核心 # 联合文件系统
@@ -39,7 +46,7 @@ docker 命令 --help
   aac9d11987ac: Pull complete 
   Digest: sha256:8e2004f9fe43df06c3030090f593021a5f283d028b5ed5765cc24236c2c4d88e	# 签名
   Status: Downloaded newer image for mysql:5.7
-  docker.io/library/mysql:5.7		# 真实地址，docker pull mysql:5.7 等价于 docker pull docker.io/library/mysql:5.7
+  docker.io/library/mysql:5.7		# 真实地址
   ```
 
 * push 将本地的镜像上传到镜像仓库，要先登陆到镜像仓库
@@ -72,10 +79,10 @@ docker 命令 --help
   docker rmi -f $(docker images -aq)		# 删除全部镜像
   ```
 
-* tag 标记本地镜像，将其归入某一仓库
+* tag 重命名镜像，可将其归入某一仓库
 
   ```shell
-  docker tag [OPTIONS] IMAGE[:TAG] [REGISTRYHOST/][USERNAME/]NAME[:TAG]
+  docker tag [OPTIONS] IMAGE:[Tag] [Registry]/[Repository]/[Image]:[Tag]
   
   docker tag ubuntu:15.10 zjt/ubuntu:v1
   ```
@@ -216,7 +223,7 @@ docker 命令 --help
 
 #### 容器rootfs命令
 
-* commit 从容器创建一个新的镜像
+* commit 从运行中的容器提交为镜像
 
   ```shell
   docker commit 容器id
