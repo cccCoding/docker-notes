@@ -51,7 +51,7 @@ Docker 包括以下三个基本概念：
 
 ## Docker架构
 
-Docker 采用 C/S （客户端/服务端）架构。客户端负责发送操作指令，服务端负责接收和处理指令。客户端和服务端通信有多种方式，既可以在同一台机器上通过UNIX套接字通信，也可以通过网络连接远程通信。
+Docker 采用 C/S （客户端/服务端）架构，主要由客户端和服务端两大部分组成。客户端负责发送操作指令，服务端负责接收和处理指令。客户端和服务端通信有多种方式，既可以在同一台机器上通过UNIX套接字通信，也可以通过网络连接远程通信。
 
 ### **架构图**
 
@@ -65,22 +65,20 @@ Docker 客户端其实是一种泛称。其中 docker 命令是 Docker 用户与
 
 Docker 服务端是 Docker 所有后台服务的统称。其中 dockerd 是一个非常重要的后台管理进程，它负责响应和处理来自 Docker 客户端的请求，然后将客户端的请求转化为 Docker 的具体操作。例如镜像、容器、网络和挂载卷等具体对象的操作和管理。
 
-### Docker 重要组件
+**服务端重要组件**
 
-* runC：是 Docker 官方按照 OCI 容器运行时标准的一个实现。通俗地讲，runC 是一个用来运行容器的轻量级工具，是真正用来运行容器的。
 * containerd：是 Docker 服务端的一个核心组件，他是从dockerd中剥离出来的。containerd 通过 containerd-shim 启动并管理 runC，可以说 containerd 真正管理了容器的生命周期。
+* runC：是 Docker 官方按照 OCI 容器运行时标准的一个实现。通俗地讲，runC 是一个用来运行容器的轻量级工具，是真正用来运行容器的。
 
 ![Drawing 3.png](https://s0.lgstatic.com/i/image/M00/49/93/Ciqc1F9PYuuAQINxAAA236heaL0459.png)
 
 通过上图可以看到，dockerd 通过 gRPC 与 containerd 通信，由于 dockerd 与真正的容器运行时 runC 中间有了 containerd 这一 OCI 标准层，使得 dockerd 可以确保接口向下兼容。
 
-**Docker 各组件之间的关系**
+**服务端各组件之间的关系**
 
 dockerd 启动的时候，containerd 就随之启动了，dockerd 和 containerd 一直存在。当执行 docker run 命令时，containerd 会创建 containerd-shim 充当“垫片”进程，然后启动容器的真正进程。
 
-
-
-### Docker 组件剖析
+### Docker 组件
 
 在 Docker 安装路径下执行 ls 命令，这样可以看到以下与 Docker 有关的组件。
 
@@ -95,13 +93,9 @@ dockerd
 runc
 ```
 
-从整体架构可知，Docker 组件可以根据工作职责大体分为 Docker 相关组件、containerd 相关组件和容器运行时相关组件三大类。
-
-Docker 的组件虽然很多，但每个组件都有自己清晰的工作职责，Docker 相关的组件负责发送和接受 Docker 请求，contianerd 相关的组件负责管理容器的生命周期，而 runc 负责真正意义上创建和启动容器。这些组件相互配合，才使得 Docker 顺利完成了容器的管理工作。
+Docker 的每个组件都有自己清晰的工作职责，根据工作职责大体分为 Docker 相关组件、containerd 相关组件和容器运行时相关组件三大类。Docker 相关的组件负责发送和接受 Docker 请求，contianerd 相关的组件负责管理容器的生命周期，而 runc 负责真正意义上创建和启动容器。这些组件相互配合，才使得 Docker 顺利完成了容器的管理工作。
 
 #### Docker 相关的组件
-
-包括 docker、dockerd、docker-init 和 docker-proxy。
 
 **（1）docker**
 
@@ -115,7 +109,7 @@ Docker 客户端可以通过多种方式向 dockerd 发送请求，我们常用�
 
 * 通过 UNIX 套接字与服务端通信：配置格式为unix://socket_path，默认 dockerd 生成的 socket 文件路径为 /var/run/docker.sock，该文件只有 root 用户或者 docker 用户组的用户才可以访问，这就是为什么 Docker 刚安装完成后只有 root 用户才能使用 docker 命令的原因。
 * 通过 TCP 与服务端通信：配置格式为tcp://host:port，通过这种方式可以实现客户端远程连接服务端，但是在方便的同时也带有安全隐患，因此在生产环境中如果你要使用 TCP 的方式与 Docker 服务端通信，推荐使用 TLS 认证，可以通过设置 Docker 的 TLS 相关参数，来保证数据传输的安全。
-* 通过文件描述符的方式与服务端通信：配置格式为：fd://这种格式一般用于 systemd 管理的系统中。
+* 通过文件描述符的方式与服务端通信：配置格式为：fd:// ，这种格式一般用于 systemd 管理的系统中。
 
 Docker 客户端和服务端的通信形式必须保持一致，否则将无法通信，只有当 dockerd 监听了 UNIX 套接字客户端才可以使用 UNIX 套接字的方式与服务端通信，UNIX 套接字也是 Docker 默认的通信方式，如果你想要通过远程的方式访问 dockerd，可以在 dockerd 启动的时候添加 -H 参数指定监听的 HOST 和 PORT。
 
@@ -127,15 +121,17 @@ Docker 客户端和服务端的通信形式必须保持一致，否则将无法�
 
 docker-proxy 主要是用来做端口映射的。当我们使用 docker run 命令启动容器时，如果使用了 -p 参数，docker-proxy 组件就会把容器内相应的端口映射到主机上来，底层是依赖于 iptables 实现的。
 
-#### containerd 相关的组件
+当我们启动一个容器时需要端口映射时， Docker 为我们创建了一个 docker-proxy 进程，并且通过参数把我们的容器 IP 和端口传递给 docker-proxy 进程，然后 docker-proxy 通过 iptables 实现了 nat 转发。
 
-包括 containerd、containerd-shim 和 ctr。
+总体来说，docker 是官方实现的标准客户端，dockerd 是 Docker 服务端的入口，负责接收客户端发送的指令并返回相应结果，而 docker-init 在业务主进程没有进程回收功能时则十分有用，docker-proxy 组件则是实现 Docker 网络访问的重要组件。
+
+#### containerd 相关的组件
 
 **（1）containerd**
 
 [containerd](https://github.com/containerd/containerd) 组件是从 Docker 1.11 版本正式从 dockerd 中剥离出来的，它的诞生完全遵循 OCI 标准，是容器标准化后的产物。containerd 完全遵循了 OCI 标准，并且是完全社区化运营的，因此被容器界广泛采用。
 
-containerd 不仅负责容器生命周期的管理，同时还负责一些其他的功能：
+containerd 不仅负责**容器生命周期的管理**，同时还负责一些其他的功能：
 
 - 镜像的管理，例如容器运行前从镜像仓库拉取镜像到本地；
 - 接收 dockerd 的请求，通过适当的参数调用 runc 启动容器；
@@ -154,11 +150,9 @@ containerd-shim 的意思是垫片，类似于拧螺丝时夹在螺丝和螺母�
 
 ctr 实际上是 containerd-ctr，它是 containerd 的客户端，主要用来开发和调试，在没有 dockerd 的环境中，ctr 可以充当 docker 客户端的部分角色，直接向 containerd 守护进程发送操作容器的请求。
 
-了解完 containerd 相关的组件，我们来了解一下容器的真正运行时 runc。
-
 #### 容器运行时组件 runc
 
-runc 是一个标准的 OCI 容器运行时的实现，它是一个命令行工具，可以直接用来创建和运行容器。
+容器的真正运行时。runc 是一个标准的 OCI 容器运行时的实现，它是一个命令行工具，可以直接用来创建和运行容器。
 
 #### 总结
 
@@ -166,6 +160,6 @@ runc 是一个标准的 OCI 容器运行时的实现，它是一个命令行工�
 
 ### Docker 当前架构的弊端
 
-当前 docker 的问题就是调用链过长，出现问题需要分析很多组件才能定位问题。
+调用链过长，出现问题需要分析很多组件才能定位问题。
 
-抽象分层就需要写时复制，性能是有一定损耗的。
+抽象分层就需要写时复制，性能有一定损耗。
