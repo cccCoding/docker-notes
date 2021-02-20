@@ -1,35 +1,10 @@
-## Docker底层原理
+## Docker 技术原理
 
-#### docker run 流程
+Docker 是基于 Linux 的 Namespace 、Cgroups 和联合文件系统这三大核心技术实现的， 即使用 Namespace 做主机名、网络、PID 等资源的隔离，使用 Cgroups 对进程或者进程组做资源（例如：CPU、内存等）的限制，联合文件系统用于镜像构建和容器运行环境。
 
-```
-docker run hello-world
-```
+### chroot
 
-1. 在本机寻找镜像
-2. 有则使用这个镜像运行，没有则去 DockerHub 上下载
-3. 运行镜像
-
-#### 底层原理
-
-Docker 是一个Client-Server 结构的系统，Docker 的守护进程运行在宿主机上，通过 Socket 从客户端访问。
-
-DockerServer 接收到 Docker-Client的指令，执行命令。
-
-架构图todo
-
-**Docker为什么比VM快**
-
-1. Docker有着比虚拟机更少的抽象层
-2. Docker用的是宿主机的内核，VM需要Guest OS，不需要重新加载一个操作系统内核，避免引导。
-
-### 容器技术原理
-
-Docker 是利用 Linux 的 Namespace 、Cgroups 和联合文件系统三大机制来保证实现的， 所以它的原理是使用 Namespace 做主机名、网络、PID 等资源的隔离，使用 Cgroups 对进程或者进程组做资源（例如：CPU、内存等）的限制，联合文件系统用于镜像构建和容器运行环境。
-
-#### chroot
-
-**什么是chroot**
+**什么是 chroot**
 
 > chroot 是在 Unix 和 Linux 系统的一个操作，针对正在运作的软件进程和它的子进程，改变它外显的根目录。一个运行在这个环境下，经由 chroot 设置根目录的程序，它不能够对这个指定根目录之外的文件进行访问动作，不能读取，也不能更改它的内容。
 
@@ -37,45 +12,13 @@ Docker 是利用 Linux 的 Namespace 、Cgroups 和联合文件系统三大机�
 
 chroot 是最早的容器雏形。
 
-#### Namespace
-
-Namespace 是 Linux 内核的一项功能，该功能对内核资源进行隔离，使容器中的进程都可以在单独的命令空间中运行，并且只可以访问当前容器命名空间的资源。
-
-Docker 主要用到以下五种命名空间。
-
-* pid namespace：用于隔离进程 ID。
-* net namespace：用于隔离网络接口，在虚拟的 net namespace 内，用户可以拥有自己独立的 IP、路由、端口等。
-* mnt namespace：文件系统挂载点隔离。
-* ipc namespace：信号量、消息队列和共享内存的隔离。
-* uts namespace：主机名和域名的隔离。
-
-#### Cgroups
-
-Cgroups 是一种 Linux 内核功能，可以限制和隔离进程的资源使用情况（CPU、内存、磁盘I/O、网络等）。在容器的实现中，Cgroups 通常用来限制容器的 CPU 和内存等资源的使用。
-
-#### 联合文件系统
-
-联合文件系统，又叫 UnionFs，是一种通过创建文件层进程操作的文件系统。因此，联合文件系统非常轻快。Docker 使用联合文件系统为容器提供构建层，使得容器可以实现写时复制以及镜像的分层构建和存储。常用的联合文件系统由 AUFS、Overlay 和Devicemapper等。
-
-#### 结语
-
-容器技术从 1979 年 chroot 的首次问世便已崭露头角，但是到了 2013 年，Dokcer 的横空出世才使得容器技术迅速发展。而Docker爆发的原因是，在同类产品的基础上加入了镜像功能，并且封装了镜像仓库使得镜像分发更加方便。
-
-Docker 还提供了工具和平台来管理容器的生命周期：
-
-1. 使用容器开发应用程序及其支持组件。
-2. 容器成为分发和测试你的应用程序的单元。
-3. 可以将应用程序作为容器或协调服务部署到生产环境中。无论您的生产环境是本地数据中心，云提供商还是两者的混合，其工作原理都相同。
-
-
-
-### Namespace 资源隔离
+### Namespace
 
 Docker 是使用 Linux 的 Namespace 技术实现各种资源隔离的。
 
 那么什么是 Namespace，各种 Namespace 都有什么作用，为什么 Docker 需要 Namespace呢？
 
-#### Namespace 定义
+#### 定义
 
 > Namespace 是 Linux 内核的一项功能，该功能对内核资源进行分区，以使一组进程看到一组资源，而另一组进程看到另一组资源。Namespace 的工作方式通过为一组资源和进程设置相同的 Namespace 而起作用，但是这些 Namespace 引用了不同的资源。资源可能存在于多个 Namespace 中。这些资源可以是进程 ID、主机名、用户 ID、文件名、与网络访问相关的名称和进程间通信。
 
@@ -83,16 +26,16 @@ Docker 是使用 Linux 的 Namespace 技术实现各种资源隔离的。
 
 最新的 Linux 5.6 内核中提供了 8 种类型的 Namespace：
 
-| Namespace 名称                   | 作用                                      | 内核版本 |
-| -------------------------------- | ----------------------------------------- | -------- |
-| Mount（mnt）                     | 隔离挂载点                                | 2.4.19   |
-| Process ID (pid)                 | 隔离进程 ID                               | 2.6.24   |
-| Network (net)                    | 隔离网络设备，端口号等                    | 2.6.29   |
-| Interprocess Communication (ipc) | 隔离 System V IPC 和 POSIX message queues | 2.6.19   |
-| UTS Namespace(uts)               | 隔离主机名和域名                          | 2.6.19   |
-| User Namespace (user)            | 隔离用户和用户组                          | 3.8      |
-| Control group (cgroup) Namespace | 隔离 Cgroups 根目录                       | 4.6      |
-| Time Namespace                   | 隔离系统时间                              | 5.6      |
+| Namespace 名称                   | 作用                           | 内核版本 |
+| -------------------------------- | ------------------------------ | -------- |
+| Mount（mnt）                     | 隔离文件系统挂载点             | 2.4.19   |
+| Process ID (pid)                 | 隔离进程 ID                    | 2.6.24   |
+| Network (net)                    | 隔离网络设备，端口号等         | 2.6.29   |
+| Interprocess Communication (ipc) | 隔离信号量、消息队列和共享内存 | 2.6.19   |
+| UTS Namespace(uts)               | 隔离主机名和域名               | 2.6.19   |
+| User Namespace (user)            | 隔离用户和用户组               | 3.8      |
+| Control group (cgroup) Namespace | 隔离 Cgroups 根目录            | 4.6      |
+| Time Namespace                   | 隔离系统时间                   | 5.6      |
 
 虽然 Linux 内核提供了8种 Namespace，但是最新版本的 Docker 只使用了其中的前6 种，分别为Mount Namespace、PID Namespace、Net Namespace、IPC Namespace、UTS Namespace、User Namespace。
 
@@ -130,19 +73,19 @@ Net Namespace 是用来隔离网络设备、IP 地址和端口等信息的。Net
 
 正是由于 Docker 使用了 Linux 的这些 Namespace 技术，才实现了 Docker 容器的隔离，可以说没有 Namespace，就没有 Docker 容器。
 
-### Cgroups 资源限制
+### Cgroups
 
 我们知道使用不同的 Namespace，可以实现容器中的进程看不到别的容器的资源，但是还有一个问题是，容器内的进程仍然可以任意地使用主机的 CPU 、内存等资源，如果某一个容器使用的主机资源过多，可能导致主机的资源竞争，进而影响业务。那如果我们想限制一个容器资源的使用（如 CPU、内存等）应该如何做呢？
 
-这里就需要用到 Linux 内核的另一个核心技术 cgroups。那么究竟什么是cgroups？我们应该如何使用 cgroups？Docker 又是如何使用 cgroups的？
+这里就需要用到 Linux 内核的另一个核心技术 Cgroups。那么究竟什么是Cgroups？我们应该如何使用 Cgroups？Docker 又是如何使用 Cgroups的？
 
-#### cgroups 定义
+#### Cgroups 定义
 
-cgroups（全称：control groups）是 Linux 内核的一个功能，它可以实现限制进程或者进程组的资源（如 CPU、内存、磁盘 IO 等）。
+Cgroups（全称：control groups）是 Linux 内核的一个功能，它可以实现限制进程或者进程组的资源（如 CPU、内存、磁盘 I/O 等）。
 
-#### cgroups 功能及核心概念
+#### Cgroups 功能及核心概念
 
-cgroups 主要提供了如下功能。
+Cgroups 主要提供了如下功能。
 
 * 资源限制： 限制资源的使用量，例如我们可以通过限制某个业务的内存上限，从而保护主机其他业务的安全运行。
 * 优先级控制：不同的组可以有不同的资源（ CPU 、磁盘 IO 等）使用优先级。
@@ -214,6 +157,26 @@ drwxr-xr-x.  3 root root 0 Sep  5 10:50 docker
 
 另外，请注意 cgroups 虽然可以实现资源的限制，但是不能保证资源的使用。例如，cgroups 限制某个容器最多使用 1 核 CPU，但不保证总是能使用到 1 核 CPU，当 CPU 资源发生竞争时，可能会导致实际使用的 CPU 资源产生竞争。
 
-### Docker 网络实现及 Libnetwork 底层原理
+### 联合文件系统
 
-### Docker 卷与持久化数据存储的底层原理
+联合文件系统（Union File System，Unionfs）是一种通过创建文件层进程操作的文件系统。是一种分层的轻量级文件系统，它可以把多个目录内容联合挂载到同一目录下，从而形成一个单一的文件系统，这种特性可以让使用者像是使用一个目录一样使用联合文件系统。
+
+Docker 使用联合文件系统为容器提供构建层，使得容器可以实现写时复制以及镜像的分层构建和存储。常用的联合文件系统由 AUFS、Overlay 和Devicemapper等。
+
+#### **AUFS**
+
+
+
+#### **Devicemapper**
+
+#### **OverlayFS**
+
+### 结语
+
+容器技术从 1979 年 chroot 的首次问世便已崭露头角，但是到了 2013 年，Dokcer 的横空出世才使得容器技术迅速发展。而Docker爆发的原因是，在同类产品的基础上加入了镜像功能，并且封装了镜像仓库使得镜像分发更加方便。
+
+Docker 还提供了工具和平台来管理容器的生命周期：
+
+1. 使用容器开发应用程序及其支持组件。
+2. 容器成为分发和测试你的应用程序的单元。
+3. 可以将应用程序作为容器或协调服务部署到生产环境中。无论您的生产环境是本地数据中心，云提供商还是两者的混合，其工作原理都相同。
