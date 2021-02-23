@@ -2,7 +2,7 @@
 
 ### 容器网络发展史
 
-Docker 从 1.7 版本开始，便把网络和存储从 Docker 中正式以插件的形式剥离开来，并且分别为其定义了标准，Docker 定义的网络模型标准称之为 CNM (Container Network Model) 。于此同时，CoreOS 推出了 CNI（Container Network Model）。
+Docker 从 1.7 版本开始，便把网络和存储从 Docker 中正式以插件的形式剥离开来，并且分别为其定义了标准。Docker 定义的网络模型标准称之为 CNM (Container Network Model) 。于此同时，CoreOS 推出了 CNI（Container Network Model）。
 
 后来由于 Kubernetes 逐渐成为了容器编排的标准，而 Kubernetes 最终选择了 CNI 作为容器网络的定义标准（具体原因可以参考[这里](https://kubernetes.io/blog/2016/01/why-kubernetes-doesnt-use-libnetwork/)），容器的网络标准分为了两大阵营，一个是以 Docker 公司为代表的 CNM，另一个便是以 Google、Kubernetes、CoreOS 为代表的 CNI 网络标准。
 
@@ -16,11 +16,11 @@ CNM 定义的网络标准包含三个重要元素。
 
 * 沙箱（Sandbox）：沙箱代表了一系列网络堆栈的配置，其中包含路由信息、网络接口等网络资源的管理，沙箱的实现通常是 Linux 的 Net Namespace，但也可以通过其他技术来实现，比如 FreeBSD jail 等。
 * 接入点（Endpoint）：接入点将沙箱连接到网络中，代表容器的网络接口，接入点的实现通常是 Linux 的 veth 设备对。
-* 网络（Network）：网络是一组可以互相通信的接入点，它将多接入点组成一个子网，并且多个接入点之间可以相互通信。
+* 网络（Network）：网络是一组可以互相通信的接入点，它将多个接入点组成一个子网，并且多个接入点之间可以相互通信。
 
 CNM 的三个要素基本抽象了所有网络模型，使得网络模型的开发更加规范。
 
-为了更好地构建容器网络标准，Docker 团队把网络功能从 Docker 中剥离出来，成为独立的项目 libnetwork，它通过插件的形式为 Docker 提供网络功能。Libnetwork 是开源的，使用 Golang 编写，它完全遵循 CNM 网络规范，是 CNM 的官方实现。
+为了更好地构建容器网络标准，Docker 团队把网络功能从 Docker 中剥离出来，成为独立的项目 Libnetwork，它通过插件的形式为 Docker 提供网络功能。Libnetwork 是开源的，使用 Golang 编写，它完全遵循 CNM 网络规范，是 CNM 的官方实现。
 
 ### Libnetwork
 
@@ -28,7 +28,7 @@ Libnetwork 是 Docker 启动容器时，用来为 Docker 容器提供网络接�
 
 #### Libnetwork 常见网络模式
 
-Libnetwork 可以构建出多种网络模式，比较典型的网络模式主要有四种，以满足我们的在不同场景下的需求（基本满足了我们单机容器的所有场景）。
+Libnetwork 可以构建出多种网络模式，比较典型的网络模式主要有四种，以满足我们的在不同场景下的需求（基本满足了单机容器的所有场景）。
 
 1. null 空网络模式：可以帮助我们构建一个没有网络接入的容器环境，以保障数据安全。
 
@@ -36,7 +36,7 @@ Libnetwork 可以构建出多种网络模式，比较典型的网络模式主要
 3. host 主机网络模式：可以让容器内的进程共享主机网络，从而监听或修改主机网络。
 4. container 网络模式：可以将两个容器放在同一个网络命名空间内，让两个业务通过 localhost 即可实现访问。
 
-查看 docker 网络信息
+**查看 docker 网络信息**
 
 ```shell
 docker network ls
@@ -48,7 +48,7 @@ docker network ls
 
 使用 Docker 创建 null 空网络模式的容器时，容器拥有自己独立的 Net Namespace，但是此时的容器并没有任何网络配置。在这种模式下，Docker 除了为容器创建了 Net Namespace 外，没有创建任何网卡接口、IP 地址、路由等网络配置。
 
-我们使用 docker run 命令启动时，添加 --net=none 参数启动一个空网络模式的容器：
+我们使用`docker run`命令启动时，添加 --net=none 参数即可启动一个空网络模式的容器：
 
 ```shell
 docker run --net=none -it busybox
@@ -56,13 +56,13 @@ docker run --net=none -it busybox
 
 **（2）bridge 桥接模式**
 
-Docker 的 bridge 网络是启动容器时默认的网络模式，使用 bridge 网络可以实现容器与容器的互通，可以从一个容器直接通过容器 IP 访问到另外一个容器。同时使用 bridge 网络可以实现主机与容器的互通，我们在容器内启动的业务，可以从主机直接请求。
+**bridge 桥接模式是 Docker 启动容器时默认的网络模式**，使用 bridge 网络可以实现容器与容器的互通，一个容器可以通过容器 IP 访问到另外一个容器。同时使用 bridge 网络可以实现主机与容器的互通，我们在容器内启动的业务，可以从主机直接请求。
 
 Docker 的 bridge 模式是由 Linux 的 veth 和 bridge 这两种技术实现的。
 
 * Linux veth
 
-veth 是 Linux 中的虚拟设备接口，veth 都是成对出现的，它在容器中，通常充当一个桥梁。veth 可以用来连接虚拟网络设备，例如 veth 可以用来连通两个 Net Namespace，从而使得两个 Net Namespace 之间可以互相访问。
+veth 是 Linux 中的虚拟设备接口，veth 都是成对出现的，它在容器中充当一个桥梁。veth 可以用来连接虚拟网络设备，例如 veth 可以用来连通两个 Net Namespace，从而使得两个 Net Namespace 之间可以互相访问。
 
 * Linux bridge
 
@@ -72,11 +72,9 @@ Linux bridge 是一个虚拟设备，是用来连接网络的设备，相当于�
 
 ![Lark20200929-162853.png](https://s0.lgstatic.com/i/image/M00/59/ED/Ciqc1F9y8IKAa-1NAABjDM-2kBk665.png)
 
-通过图 1 ，我们可以看到，bridge 就像一台交换机，而 veth 就像一根网线，通过交换机和网线可以把两个不同 Net Namespace 的容器连通，使得它们可以互相通信。
+通过图 1 可以看到，bridge 就像一台交换机，而 veth 就像一根网线，通过交换机和网线可以把两个不同 Net Namespace 的容器连通，使得它们可以互相通信。
 
-**Docker 的 bridge 模式也是这种原理。Docker 启动时，libnetwork 会在主机上创建 docker0 网桥，docker0 网桥就相当于图 1 中的交换机，而 Docker 创建出的 bridge 模式的容器则都会连接 docker0 上，从而实现网络互通。**
-
-**bridge 桥接模式是 Docker 的默认网络模式，当我们创建容器时不指定任何网络模式，Docker 启动容器默认的网络模式为 bridge。**
+**Docker 的 bridge 模式也是这种原理。Docker 启动时，Libnetwork 会在主机上创建 docker0 网桥，docker0 网桥就相当于图 1 中的交换机，而 Docker 创建出的 bridge 模式的容器则都会连接 docker0 上，从而实现网络互通。**
 
 **（3）host 主机网络模式**
 
@@ -84,9 +82,9 @@ Linux bridge 是一个虚拟设备，是用来连接网络的设备，相当于�
 
 使用 host 主机网络模式时：
 
-* libnetwork 不会为容器创建新的网络配置和 Net Namespace。
+* Libnetwork 不会为容器创建新的 Net Namespace 和网络配置。
 
-* Docker 容器中的进程直接共享主机的网络配置，可以直接使用主机的网络信息，此时，在容器内监听的端口，也将直接占用到主机的端口。
+* Docker 容器中的进程直接共享主机的网络配置，可以直接使用主机的网络信息。此时，在容器内监听的端口，也将直接占用到主机的端口。
 * 除了网络共享主机的网络外，其他的包括进程、文件系统、主机名等都是与主机隔离的。
 
 启动一个主机网络模式的 busybox 镜像：
@@ -111,7 +109,7 @@ docker run -d --name=busybox1 busybox sleep 3600
 docker run -it --net=container:busybox1 --name=busybox2 busybox sh
 ```
 
-进入两个容器，通过`ifconfig`命令可以看到，busybox2 与 busybox1 的网络一致，IP 一致。
+进入两个容器，通过`ifconfig`命令可以看到，busybox2 与 busybox1 的网络一致，IP 一致。两个容器之间可以直接通过 localhost 通信。
 
 **小结**
 
@@ -119,7 +117,7 @@ docker run -it --net=container:busybox1 --name=busybox2 busybox sh
 
 ### docker0
 
-Docker 的 bridge 模式。Docker 启动时，libnetwork 会在主机上创建 docker0 网桥，docker0 网桥就相当于交换机，而 Docker 创建出的 bridge 模式的容器则都会连接 docker0 上，从而实现网络互通。
+Docker 的 bridge 桥接模式。Docker 启动时，Libnetwork 会在主机上创建 docker0 网桥，docker0 网桥就相当于交换机，而 Docker 创建出的 bridge 模式的容器则都会连接 docker0 上，从而实现网络互通。
 
 查看网卡信息 docker0 地址
 
@@ -135,18 +133,16 @@ docker run -d -P --name tomcat01 tomcat
 docker exec -it tomcat01 ip addr	# 可以看到类似 eth0@if262 的ip地址，是docker分配的
 ```
 
-**宿主机和容器之间能通过 ip ping 通**
+**宿主机和容器之间、各个容器之间能通过 ip ping 通**
 
 原理：
 
-1. 我们每启动一个 docker 容器，docker 就会给容器分配一个 ip，而我们只要安装了docker，就会有一个网卡docker0
-2. 桥接模式，使用的是 veth-pair 技术，veth-pair 就是一对虚拟设备接口，成对出现
+1. Docker 启动时，Libnetwork 会在主机上创建 docker0 网桥，而我们每启动一个 docker 容器，docker 就会给容器分配一个 ip
+2. 使用 veth 技术，通过 docker0 连通主机
 
 **各个容器之间能通过 ip ping 通**
 
-原理：
-
-不指定 --net ，默认走docker0网络，通过veth-pair连接到docker0，再由docker0路由（docker会给我们的容器分配一个默认的可用ip）
+原理：Docker 启动时，Libnetwork 会在主机上创建 docker0 网桥，docker0 网桥就相当于交换机，而 Docker 创建出的 bridge 模式的容器则都会连接 docker0 上，从而实现网络互通。
 
 tip：
 
@@ -155,7 +151,7 @@ tip：
 
 **各个容器之间不能通过容器名互相访问**
 
-docker0不支持容器之间通过容器名互相访问
+docker0 不支持容器之间通过容器名互相访问。
 
 解决方案
 
@@ -167,7 +163,9 @@ docker0不支持容器之间通过容器名互相访问
 
 ### 自定义网络
 
-**创建网络**
+#### 创建并使用自定义网络
+
+创建自定义网络
 
 ```shell
 docker network create --driver bridge --subnet 192.168.0.0/16 --gateway 192.168.0.1 mynet
@@ -198,16 +196,16 @@ docker exec -it tomcat-01 ping tomcat02
 
 #### 网络连通
 
-一个在A网络中的容器连接到另一个网络
+一个在 A 网络中的容器连接到另一个网络 B
 
 ```shell
-# docker0网络下创建tomcat03
+# docker0 网络下创建 tomcat03
 docker run -d -P --name tomcat03 tomcat
 
-# tomcat03连接自定义网络mynet
+# tomcat03 连接自定义网络 mynet
 docker network connect mynet tomcat03
 
-# 查看自定义网络，发现tomcat03加入到自定义网络mynet中。一个容器，两个ip。
+# 查看自定义网络，发现 tomcat03 加入到自定义网络 mynet 中。一个容器，两个ip。
 docker network inspect mynet
 
 # 测试

@@ -1,6 +1,6 @@
 ## Kubernetes
 
-Docker 是容器领域的标准，Kubernetes 是容器编排领域的标准。
+Docker 是容器领域的标准，而 Kubernetes 是容器编排领域的标准。
 
 ### 架构
 
@@ -33,7 +33,7 @@ kube-scheduler 用于监听未被调度的 Pod，然后根据一定调度策略�
 
 kube-controller-manager 负责维护整个集群的状态和资源的管理。例如多个副本数量的保证，Pod 的滚动更新等。每种资源的控制器都是一个独立协程。kube-controller-manager 实际上是一系列资源控制器的总称。
 
-> 为了保证 Kubernetes 集群的高可用，Master 组件需要部署在多个节点上，由于 Kubernetes 所有数据都存在于 etcd 中，Etcd 是基于 Raft 协议实现，因此生产环境中 Master 通常建议至少三个节点（如果想要更高的可用性，可以使用 5 个或者 7 个节点）。
+> 为了保证 Kubernetes 集群的高可用，Master 组件需要部署在多个节点上，由于 Kubernetes 所有数据都存在于 etcd 中，etcd 是基于 Raft 协议实现，因此生产环境中 Master 通常建议至少三个节点（如果想要更高的可用性，可以使用 5 个或者 7 个节点）。
 
 #### Node 节点
 
@@ -47,9 +47,9 @@ Kubelet 是在每个工作节点运行的代理，它负责管理容器的生命
 
 Kube-proxy 是在每个工作节点的网络插件，它实现了 Kubernetes 的 Service 的概念。Kube-proxy 通过维护集群上的网络规则，实现集群内部可以通过负载均衡的方式访问到后端的容器。
 
-Kubernetes 的成功不仅得益于其优秀的架构设计，更加重要的是 Kubernetes 提出了很多核心的概念，这些核心概念构成了容器编排的主要模型。
-
 ### 核心概念
+
+Kubernetes 的成功不仅得益于其优秀的架构设计，更加重要的是 Kubernetes 提出了很多核心的概念，这些核心概念构成了容器编排的主要模型。
 
 #### （1）集群
 

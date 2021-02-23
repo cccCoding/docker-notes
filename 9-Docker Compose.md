@@ -6,7 +6,7 @@
 
 Docker Compose 是 Docker 官方的单机多容器管理系统，它本质是一个 Python 脚本，它通过解析用户编写的 yaml 文件，调用 Docker API 实现动态的创建和管理多个容器。
 
-通常用户服务依赖关系复杂的开发和测试环境，通过 Docker Compose 可一键启动，提高开发效率。线上环境要做到多机集群调度，可使用 Docker Swarm 和 Kubernetes。
+通常，服务依赖关系复杂的开发和测试环境，通过 Docker Compose 可一键启动，提高开发效率。当然线上环境要做到多机集群调度，需使用 Docker Swarm 和 Kubernetes。
 
 ### 安装
 
@@ -34,17 +34,17 @@ $ docker-compose --version
 
 https://docs.docker.com/compose/compose-file/
 
-在使用 Docker Compose 启动容器时， Docker Compose 会默认使用 **docker-compose.yml** 文件，文件的格式为 yaml。
+在使用 Docker Compose 启动容器时， Docker Compose 会默认使用 docker-compose.yml 文件，文件的格式为 yaml。
 
 Docker Compose 模板文件一共有三个版本： v1、v2 和 v3。目前最新的版本为 v3。
 
 Docker Compose 文件主要分为三部分： services（服务）、networks（网络） 和 volumes（数据卷）。
 
-* services（服务）：服务定义了容器启动的各项配置，就像我们执行docker run命令时传递的容器启动的参数一样，指定了容器应该如何启动，例如容器的启动参数，容器的镜像和环境变量等。
+* services（服务）：定义了容器启动的各项配置，就像我们执行`docker run`命令时传递的容器启动的参数一样，指定了容器应该如何启动，例如容器的启动参数，容器的镜像和环境变量等。
 
-* networks（网络）：网络定义了容器的网络配置，就像我们执行docker network create命令创建网络配置一样。
+* networks（网络）：定义了容器的网络配置，就像我们执行`docker network create`命令创建网络配置一样。
 
-* volumes（数据卷）：数据卷定义了容器的卷配置，就像我们执行docker volume create命令创建数据卷一样。
+* volumes（数据卷）：定义了容器的卷配置，就像我们执行`docker volume create`命令创建数据卷一样。
 
 一个典型的 Docker Compose 文件结构如下：
 
@@ -60,15 +60,15 @@ volumes:
   db-data:
 ```
 
-### Docker Compose 操作命令
+### docker-compose 命令
 
 参数
 
 ```shell
 docker-compose
-	-f, --file FILE             指定 docker-compose 文件，默认为 docker-compose.yml
-	-p, --project-name NAME     指定项目名称，默认使用当前目录名称作为项目名称
-	-d							后台启动？
+	-f, --file FILE             # 指定模板文件，默认为 docker-compose.yml
+	-p, --project-name NAME     # 指定项目名称，默认使用当前目录名称作为项目名称
+	-d							# 后台执行
 ```
 
 命令
