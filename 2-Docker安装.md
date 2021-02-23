@@ -2,21 +2,21 @@
 
 https://docs.docker.com/engine/install/centos/
 
-建议CentOS7及以上的发行版本。建议使用`overlay2`存储驱动程序。
+建议 CentOS7 及以上的发行版本。建议使用`overlay2`存储驱动程序。
 
-#### docker安装
+### 安装
 
 1. 卸载旧版本
 
    ```bash
    yum remove docker \
-                     docker-client \
-                     docker-client-latest \
-                     docker-common \
-                     docker-latest \
-                     docker-latest-logrotate \
-                     docker-logrotate \
-                     docker-engine
+       docker-client \
+       docker-client-latest \
+       docker-common \
+       docker-latest \
+       docker-latest-logrotate \
+       docker-logrotate \
+       docker-engine
    ```
 
 2. 安装工具包
@@ -91,7 +91,7 @@ https://docs.docker.com/engine/install/centos/
    sudo systemctl restart docker
    ```
 
-#### docker卸载
+### 卸载
 
 1. 卸载软件包
 

@@ -2,9 +2,9 @@
 
 ### 简介
 
-容器是基于镜像创建的可运行实例。运行容器化环境时，实际上实在容器内部创建该文件系统的读写副本。这将添加一个容器层，该层允许修改镜像的整个副本。
+容器是基于镜像创建的可运行实例。Docker 镜像都是只读的，当容器启动时，实际上是在容器内部创建该文件系统的读写副本。一个新的可写层被加载到镜像的顶部，这一层就是我们通常说的容器层，该层允许修改镜像的整个副本。容器层之下都叫镜像层。
 
-![image.png](C:\Users\Administrator\Desktop\容器\docker-notes\6-容器数据卷.assets\CgqCHl9YmlSAGgF0AABXUH--rM4624.png)
+![image.png](https://s0.lgstatic.com/i/image/M00/4C/D1/CgqCHl9YmlSAGgF0AABXUH--rM4624.png)
 
 ### 容器生命周期
 
@@ -20,10 +20,12 @@
 
 
 
-当使用docker run创建并启动容器时，Docker 后台执行的流程为：
+### docker run 流程
 
-* Docker 会检查本地是否存在 busybox 镜像，如果镜像不存在则从 Docker Hub 拉取 busybox 镜像；
-* 使用 busybox 镜像创建并启动一个容器；
+当使用`docker run`创建并启动容器时，Docker 后台执行的流程为：
+
+* Docker 会检查本地是否存在镜像，如果镜像不存在则从 Docker Hub 拉取镜像；
+* 使用镜像创建并启动一个容器；
 * 分配文件系统，并且在镜像只读层外创建一个读写层；
 * 从 Docker IP 池中分配一个 IP 给容器；
 * 执行用户的启动命令运行镜像。
@@ -41,15 +43,15 @@
 
 虽然容器希望所有的业务都尽量保持无状态，这样容器就可以开箱即用，并且可以任意调度，但实际业务总是有各种需要数据持久化的场景，比如 MySQL、Kafka 等有状态的业务。因此为了解决有状态业务的需求，Docker 提出了卷（Volume）的概念。
 
-Volume 是一个存储概念的封装，不仅支持 local 还支持 nfs 等网络存储。
+Volume 是一个存储概念的封装，不仅支持 local 模式，还支持 nfs 等网络存储。
 
-### 概念
+### 什么是卷
 
-什么是卷？卷的本质是文件或者目录，它可以绕过默认的联合文件系统，直接以文件或目录的形式存在于宿主机上。卷的概念不仅解决了数据持久化的问题，还解决了容器间共享数据的问题。使用卷可以将容器内的目录或文件持久化，当容器重启后保证数据不丢失。
+卷的本质是文件或者目录，它可以绕过默认的联合文件系统，直接以文件或目录的形式存在于宿主机上。卷的概念不仅解决了数据持久化的问题，还解决了容器间共享数据的问题。使用卷可以将容器内的目录或文件持久化，当容器重启后保证数据不丢失。
 
 ### Docker 卷的操作
 
-Docker 提供了卷（Volume）的功能，使用`docker volume`命令可以实现对卷的创建、查看和删除等操作。
+使用`docker volume`命令可以实现对卷的创建、查看和删除等操作。
 
 #### 创建数据卷
 
@@ -57,7 +59,7 @@ Docker 提供了卷（Volume）的功能，使用`docker volume`命令可以实�
 docker volume create myvolume
 ```
 
-默认情况下 ，Docker 创建的数据卷为 local 模式，仅能提供本主机的容器访问。如果想要实现远程访问，需要借助网络存储来实现。Docker 的 local 存储模式并未提供配额管理，因此在生产环境中需要手动维护磁盘存储空间。
+默认情况下，Docker 创建的数据卷为 local 模式，仅能提供本主机的容器访问。如果想要实现远程访问，需要借助网络存储来实现。Docker 的 local 存储模式并未提供配额管理，因此在生产环境中需要手动维护磁盘存储空间。
 
 除了使用`docker volume create`的方式创建卷，我们还可以在 Docker 启动时使用 -v 的方式指定容器内需要被持久化的路径，Docker 会自动为我们创建卷，并且绑定到容器中：
 
@@ -67,7 +69,7 @@ docker run -d --name=nginx-volume -v /usr/share/nginx/html nginx
 
 以上命令启动了一个 nginx 容器，`-v`参数使得 Docker 自动生成一个卷并且绑定到容器的 /usr/share/nginx/html 目录中。
 
-我们可以使用`docker volume ls`命令来查看下主机上的卷：
+使用`docker volume ls`命令来查看下主机上的卷：
 
 ```shell
 $ docker volume ls
@@ -81,7 +83,7 @@ local               eaa8a223eb61a2091bf5cd5247c1b28ac287450a086d6eee9632
 
 * **匿名挂载**
 
-> -v 容器内路径
+-v 容器内路径
 
 ```shell
 docker run -d -P nginx01 -v /etc/nginx nginx
@@ -91,30 +93,29 @@ docker volume ls	# 生成随机id名称的卷
 
 * **具名挂载**
 
-> -v 卷名:容器内路径
+-v 卷名:容器内路径
 
 ```shell
 docker run -d -P nginx02 -v juming-nginx:/etc/nginx nginx
 
-docker volume ls	# 生成卷 juming-nginx
+docker volume ls	# 生成名称为juming-nginx的卷
 ```
 
-所有docker容器内的卷，没有指定目录的情况下，都是在`/var/lib/docker/volumes/xxx/_data` 。
+所有 docker 容器内的卷，没有指定目录的情况下，都是在`/var/lib/docker/volumes/xxx/_data` 。
 
-通过具名挂载可以方便地找到卷，推荐使用。
+相比较匿名挂载，具名挂载可以方便地找到卷，方便使用。
 
 * **指定路径挂载**
 
 > -v 宿主机路径:容器内路径
 
-**扩展**
+**读写权限**
 
 ```shell
-# -v 容器内路径：ro/rw ，改变读写权限
+# -v 容器内路径：ro/rw，改变挂载内容的读写权限
 # ro readonly，只读，表明这个路径只能通过宿主机来操作，容器内无法操作
 # rw readwrite
 
-# 一旦设置了容器权限，容器对我们挂载出来的内容就有限定了
 docker run -d -P nginx02 -v juming-nginx:/etc/nginx:ro nginx
 docker run -d -P nginx02 -v juming-nginx:/etc/nginx:rw nginx
 ```
@@ -125,7 +126,7 @@ docker run -d -P nginx02 -v juming-nginx:/etc/nginx:rw nginx
 docker volume ls
 ```
 
-#### 查看数据卷详情
+#### 查看卷详情
 
 ```shell
 docker volume inspect myvolume
@@ -135,7 +136,7 @@ docker volume inspect myvolume
 
 #### 使用数据卷
 
-使用`docker volume`创建的卷在容器启动时，添加 --mount 参数指定卷的名称即可使用。
+在容器启动时添加 --mount 参数指定卷的名称，即可使用`docker volume create`创建的卷。
 
 这里我们使用上一步创建的卷来启动一个 nginx 容器，并将 /usr/share/nginx/html 目录与卷关联：
 
@@ -143,11 +144,11 @@ docker volume inspect myvolume
 docker run -d --name=nginx --mount source=myvolume,target=/usr/share/nginx/html nginx
 ```
 
-使用 Docker 的卷可以实现指定目录的文件持久化，进入容器中并在 /usr/share/nginx/html 目录下新增 index.html 文件内容，将容器删除，启动新的容器并挂载 myvolume 卷，文件数据依然在。使用 Docker 卷后数据并没有随着容器的删除而消失。
+使用 Docker 的卷可以实现指定目录的文件持久化，进入容器中并在 /usr/share/nginx/html 目录下新增 index.html 文件内容，将容器删除，启动新的容器并再次挂载 myvolume 卷，文件数据依然在。
 
 #### **删除数据卷**
 
-容器的删除并不会自动删除已经创建的数据卷，因此不再使用的数据卷需要我们手动删除:
+删除容器并不会自动删除已经创建的数据卷，因此不再使用的数据卷需要我们手动删除:
 
 ```shell
 docker volume rm myvolume
@@ -181,13 +182,13 @@ docker run -it --name consumer --volumes-from log-producer busybox
 
 数据卷的生命周期持续到没有容器使用为止。
 
-B挂载A，则A为父容器（数据卷容器），B为子容器。
+B 挂载 A，则称 A 为父容器（数据卷容器），B 为子容器。
 
 #### 主机与容器之间数据共享
 
-Docker 卷的目录默认在 /var/lib/docker 下，如果想把主机的其他目录映射到容器内，就需要用到主机与容器之间数据共享的方式了。例如我想把 MySQL 容器中的 /var/lib/mysql 目录映射到主机的 /var/lib/mysql 目录中，我们就可以使用主机与容器之间数据共享的方式来实现。
+Docker 卷的目录默认在 /var/lib/docker 下，如果想把主机的其他目录映射到容器内，则需要用到主机与容器之间数据共享的方式。
 
-要实现主机与容器之间数据共享很简单，只需要我们在启动容器的时候添加`-v`参数即可, 使用格式为：`-v HOST_PATH:CONTIANAER_PATH`。
+要实现主机与容器之间数据共享很简单，只需要我们在启动容器的时候添加`-v`参数即可，使用格式为：`-v HOST_PATH:CONTIANAER_PATH`。
 
 例如，我想挂载主机的 /data 目录到容器中的 /usr/local/data 中，可以使用以下命令来启动容器：
 
@@ -207,19 +208,13 @@ docker run -v /data:/usr/local/data -it busybox
 
 Docker 容器的文件系统不是一个真正的文件系统，而是通过联合文件系统实现的一个伪文件系统，而 Docker 卷则是直接利用主机的某个文件或者目录，它可以绕过联合文件系统，直接挂载主机上的文件或目录到容器中，这就是它的工作原理。
 
-通过 docker volume create myvolume 命令创建卷后，在 /var/lib/docker/volumes 目录下会生成对应文件夹 myvolume，并且 myvolume 目录下还创建了一个 _data 目录。
-
-实际上，在我们创建 Docker 卷时，Docker 会把卷的数据全部放在 /var/lib/docker/volumes 目录下，并且在每个对应的卷的目录下创建一个 _data 目录，然后把 _data 目录绑定到容器中。因此我们在容器中挂载卷的目录下操作文件，实际上是在操作主机上的 _data 目录。
-
-**Docker 卷的实现原理是在主机的 /var/lib/docker/volumes 目录下，根据卷的名称创建相应的目录，然后在每个卷的目录下创建 _data 目录，在容器启动时如果使用 --mount 参数，Docker 会把主机上的目录直接映射到容器的指定目录下，实现数据持久化。**
+**Docker 卷的实现原理，即在我们创建 Docker 卷时，在主机的 /var/lib/docker/volumes 目录下，根据卷的名称创建相应的目录，然后在每个卷的目录下创建 _data 目录。在容器启动时如果使用 --mount 参数，Docker 会把主机上的 _data 目录映射到容器的指定目录下，实现数据持久化。因此我们在容器中挂载卷的目录下操作文件，实际上是在操作主机上的 _data 目录。**
 
 如何使用卷来挂载 NFS 类型的持久化存储到容器内？
 
 ### Dockerfile 中的卷
 
-Dockerfile 就是用来构建 docker 镜像的文件
-
-创建 dockerfile01
+创建 Dockerfile
 
 ```shell
 # 指令都大写
@@ -236,6 +231,6 @@ CMD /bin/bash
 构建镜像
 
 ```shell
-docker build -f dockerfile01 -t mycentos:1.0 .
+docker build -t mycentos:1.0 .
 ```
 
